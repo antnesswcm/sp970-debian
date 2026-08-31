@@ -83,6 +83,12 @@ cat << EOF > ${CHROOT}/etc/udev/rules.d/99-nm-usb0.rules
 SUBSYSTEM=="net", ACTION=="add|change|move", ENV{DEVTYPE}=="gadget", ENV{NM_UNMANAGED}="0"
 EOF
 
+# USB NCM gadget udev 触发（与 sp970-alpine setup_ncm_gadget.sh 同构，UDC 出现即建 gadget）
+# 比 systemd service 更可靠：不依赖 multi-user.target 启动链；脚本幂等，与 service 双保险
+cat << EOF > ${CHROOT}/etc/udev/rules.d/10-udc.rules
+ACTION=="add", SUBSYSTEM=="udc", RUN+="/sbin/modprobe libcomposite", RUN+="/usr/sbin/sp970-usb-ncm.sh"
+EOF
+
 # install kernel (6.12.1 = 与 sp970-alpine 同版本, DTB 兼容零风险; 阿里云镜像加速)
 wget -O - https://mirrors.aliyun.com/postmarketOS/v25.12/aarch64/linux-postmarketos-qcom-msm8916-6.12.1-r2.apk \
     | tar xkzf - -C ${CHROOT} --exclude=.PKGINFO --exclude=.SIGN* 2>/dev/null
@@ -123,6 +129,80 @@ fi
 
 # update fstab
 echo "PARTUUID=80780b1d-0fe1-27d3-23e4-9244e62f8c46\t/boot\text2\tdefaults\t0 2" > ${CHROOT}/etc/fstab
+
+# ---- firmware integrity check (build time gate, 移植自 sp970-alpine alpine_rootfs.sh) ----
+# 任何关键文件缺失/单元文件被覆盖成裸路径 → exit 1，坏固件不出门
+echo "=== firmware integrity check ==="
+errors=0
+check() {
+    if [ -e "${CHROOT}/$1" ]; then
+        echo "  ✅ $1"
+    else
+        echo "  ❌ $1 — MISSING!"
+        errors=$((errors+1))
+    fi
+}
+
+check "boot/vmlinuz"
+check "boot/extlinux/extlinux.conf"
+check "boot/dtbs/qcom/msm8916-handsome-openstick-sp970.dtb"
+check "lib/firmware/wcnss.mdt"
+check "lib/firmware/wcnss.b00"
+check "lib/firmware/wlan/prima/WCNSS_qcom_wlan_nv.bin"
+check "lib/firmware/mba.mbn"
+check "lib/firmware/modem.mdt"
+check "usr/sbin/sp970-usb-ncm.sh"
+check "usr/sbin/msm-firmware-loader.sh"
+check "etc/udev/rules.d/10-udc.rules"
+check "etc/udev/rules.d/99-nm-usb0.rules"
+check "etc/systemd/system/NetworkManager.service"
+check "etc/NetworkManager/system-connections/hotspot.nmconnection"
+check "etc/NetworkManager/system-connections/usb.nmconnection"
+check "etc/NetworkManager/system-connections/lte.nmconnection"
+
+# systemd 单元必须是以 [Unit] 开头的有效文件（防 find 覆盖 bug: 单元被裸路径文本覆盖）
+for svc in usb-gadget.service msm-firmware-loader.service sp970-led.service sp970-nat.service sp970-sim-activate.service; do
+    fpath="${CHROOT}/etc/systemd/system/${svc}"
+    if [ -f "$fpath" ] && head -1 "$fpath" | grep -q '^\[Unit\]'; then
+        echo "  ✅ etc/systemd/system/${svc} (valid unit)"
+    else
+        echo "  ❌ etc/systemd/system/${svc} — INVALID or MISSING (must start with [Unit])"
+        errors=$((errors+1))
+    fi
+done
+
+# multi-user.target.wants 软链必须指向存在的单元（防覆盖 bug 的第二个观测点）
+for svc in usb-gadget.service msm-firmware-loader.service; do
+    link="${CHROOT}/etc/systemd/system/multi-user.target.wants/${svc}"
+    if [ -L "$link" ] && [ -e "${CHROOT}/etc/systemd/system/${svc}" ]; then
+        echo "  ✅ multi-user.target.wants/${svc} -> ${svc}"
+    else
+        echo "  ❌ multi-user.target.wants/${svc} — symlink MISSING or dangling"
+        errors=$((errors+1))
+    fi
+done
+
+if [ "$errors" -gt 0 ]; then
+    echo "❌ firmware integrity check: $errors errors — aborting build"
+    exit 1
+fi
+echo "✅ firmware integrity check: all files present"
+
+# rootfs 内脚本可执行权限检查（udev/systemd 调用的）
+perm_errors=0
+for f in usr/sbin/sp970-usb-ncm.sh usr/sbin/msm-firmware-loader.sh usr/libexec/sp970-sim-activate.sh usr/libexec/sp970-led.sh usr/libexec/sp970-nat.sh; do
+    if [ -x "${CHROOT}/${f}" ]; then
+        echo "  ✅ ${f} (executable)"
+    else
+        echo "  ❌ ${f} — NOT executable!"
+        perm_errors=$((perm_errors+1))
+    fi
+done
+if [ "$perm_errors" -gt 0 ]; then
+    echo "❌ executable permission check: $perm_errors errors — aborting build"
+    exit 1
+fi
+echo "✅ executable permission check: all scripts executable"
 
 # backup rootfs
 tar cpzf rootfs.tgz --exclude="usr/bin/qemu-aarch64-static" -C rootfs .

@@ -13,6 +13,9 @@
 CONFIGFS="/sys/kernel/config/usb_gadget"
 NAME="openstick"
 
+# configfs 自挂载保险（udev 触发时可能早于 systemd 的 sys-kernel-config.mount）
+[ -d /sys/kernel/config ] || mount -t configfs configfs /sys/kernel/config 2>/dev/null || true
+
 DIR="${CONFIGFS}/${NAME}"
 
 NCM_HOST_ADDR="2a:85:da:41:eb:f9"

@@ -20,9 +20,9 @@ fi
 chroot ${CHROOT} ${QEMU} /bin/bash /debootstrap/debootstrap --second-stage
 
 cat << EOF > ${CHROOT}/etc/apt/sources.list
-deb https://mirrors.tuna.tsinghua.edu.cn/debian ${RELEASE} main contrib non-free-firmware
-deb https://mirrors.tuna.tsinghua.edu.cn/debian-security ${RELEASE}-security main contrib non-free-firmware
-deb https://mirrors.tuna.tsinghua.edu.cn/debian ${RELEASE}-updates main contrib non-free-firmware
+deb http://mirrors.tuna.tsinghua.edu.cn/debian ${RELEASE} main contrib non-free-firmware
+deb http://mirrors.tuna.tsinghua.edu.cn/debian-security ${RELEASE}-security main contrib non-free-firmware
+deb http://mirrors.tuna.tsinghua.edu.cn/debian ${RELEASE}-updates main contrib non-free-firmware
 EOF
 
 mount -t proc proc ${CHROOT}/proc/

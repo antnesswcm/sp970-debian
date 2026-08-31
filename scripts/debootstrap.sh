@@ -14,9 +14,9 @@ cp $(which qemu-aarch64-static) ${CHROOT}/usr/bin
 chroot ${CHROOT} qemu-aarch64-static /bin/bash /debootstrap/debootstrap --second-stage
 
 cat << EOF > ${CHROOT}/etc/apt/sources.list
-deb http://deb.debian.org/debian ${RELEASE} main contrib non-free-firmware
-deb http://deb.debian.org/debian-security/ ${RELEASE}-security main contrib non-free-firmware
-deb http://deb.debian.org/debian ${RELEASE}-updates main contrib non-free-firmware
+deb https://mirrors.tuna.tsinghua.edu.cn/debian ${RELEASE} main contrib non-free-firmware
+deb https://mirrors.tuna.tsinghua.edu.cn/debian-security ${RELEASE}-security main contrib non-free-firmware
+deb https://mirrors.tuna.tsinghua.edu.cn/debian ${RELEASE}-updates main contrib non-free-firmware
 EOF
 
 mount -t proc proc ${CHROOT}/proc/
@@ -65,8 +65,8 @@ cat << EOF > ${CHROOT}/etc/udev/rules.d/99-nm-usb0.rules
 SUBSYSTEM=="net", ACTION=="add|change|move", ENV{DEVTYPE}=="gadget", ENV{NM_UNMANAGED}="0"
 EOF
 
-# install kernel
-wget -O - http://mirror.postmarketos.org/postmarketos/v24.06/aarch64/linux-postmarketos-qcom-msm8916-6.6-r5.apk \
+# install kernel (6.12.1 = 与 sp970-alpine 同版本, DTB 兼容零风险; 阿里云镜像加速)
+wget -O - https://mirrors.aliyun.com/postmarketOS/v25.12/aarch64/linux-postmarketos-qcom-msm8916-6.12.1-r2.apk \
     | tar xkzf - -C ${CHROOT} --exclude=.PKGINFO --exclude=.SIGN* 2>/dev/null
 
 mkdir -p ${CHROOT}/boot/extlinux

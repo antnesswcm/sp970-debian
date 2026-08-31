@@ -52,7 +52,8 @@ echo ${HOST_NAME} > ${CHROOT}/etc/hostname
 sed -i "/localhost/ s/$/ ${HOST_NAME}/" ${CHROOT}/etc/hosts
 
 # setup systemd services (exclude sp970 fix files — installed by setup.sh)
-find configs/system -name '*.service' ! -name 'sp970-sim-activate.service' -exec cp -a {} ${CHROOT}/etc/systemd/system \;
+# -type f: 只拷实体 .service；跳过 wants 目录里的软链（避免 basename 相同覆盖成悬垂软链）
+find configs/system -name '*.service' -type f ! -name 'sp970-sim-activate.service' -exec cp -a {} ${CHROOT}/etc/systemd/system \;
 # also copy non-service system configs (override.conf, target wants, etc.)
 for f in configs/system/*; do
     case "$f" in
@@ -67,6 +68,8 @@ for svc in usb-gadget.service msm-firmware-loader.service; do
 done
 
 cp -a scripts/msm-firmware-loader.sh ${CHROOT}/usr/sbin
+cp -a configs/system/sp970-usb-ncm.sh ${CHROOT}/usr/sbin/sp970-usb-ncm.sh
+chmod 0755 ${CHROOT}/usr/sbin/sp970-usb-ncm.sh
 
 # setup NetworkManager
 cp configs/*.nmconnection ${CHROOT}/etc/NetworkManager/system-connections
@@ -93,15 +96,27 @@ cp dtbs/* ${CHROOT}/boot/dtbs/qcom
 mkdir -p ${CHROOT}/lib/firmware/msm-firmware-loader
 
 # SP970 WCNSS WiFi 固件 + NV 校准（可选注入，双保险）
-# 源: sp970-firmware/firmware/sp970/（私有 blob 不入仓，由 SP970_FIRMWARE_DIR 提供）
+# 源: sp970-alpine 仓 firmware/sp970/（由 SP970_FIRMWARE_DIR 提供，CI 从公开仓稀疏拉取）
 if [ -n "${SP970_FIRMWARE_DIR}" ] && [ -d "${SP970_FIRMWARE_DIR}/sp970" ]; then
     mkdir -p ${CHROOT}/lib/firmware/wlan/prima
     for f in ${SP970_FIRMWARE_DIR}/sp970/WCNSS.B* ${SP970_FIRMWARE_DIR}/sp970/WCNSS.MDT; do
+        [ -e "$f" ] || continue
         name=$(basename "$f" | tr 'A-Z' 'a-z')
         cp "$f" ${CHROOT}/lib/firmware/${name}
     done
     cp ${SP970_FIRMWARE_DIR}/sp970/WCNSS_qcom_wlan_nv.bin ${CHROOT}/lib/firmware/wlan/prima/WCNSS_qcom_wlan_nv.bin
     echo "SP970 WCNSS firmware injected (${SP970_FIRMWARE_DIR}/sp970)"
+fi
+
+# SP970 modem 固件（mss-pil: mba.mbn → modem.mdt + modem.bXX；缺失则 Boot failed -2）
+# 源: sp970-alpine 仓 firmware/modem/sp970/
+if [ -n "${SP970_FIRMWARE_DIR}" ] && [ -d "${SP970_FIRMWARE_DIR}/modem/sp970" ]; then
+    mkdir -p ${CHROOT}/lib/firmware
+    cp ${SP970_FIRMWARE_DIR}/modem/sp970/mba.mbn ${CHROOT}/lib/firmware/
+    cp ${SP970_FIRMWARE_DIR}/modem/sp970/modem.mbn ${CHROOT}/lib/firmware/ 2>/dev/null || true
+    cp ${SP970_FIRMWARE_DIR}/modem/sp970/modem.mdt ${CHROOT}/lib/firmware/
+    cp ${SP970_FIRMWARE_DIR}/modem/sp970/modem.b* ${CHROOT}/lib/firmware/
+    echo "SP970 modem firmware injected (${SP970_FIRMWARE_DIR}/modem/sp970)"
 fi
 
 # update fstab

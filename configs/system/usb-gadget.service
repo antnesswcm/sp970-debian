@@ -5,10 +5,9 @@ After=sys-kernel-config.mount
 
 [Service]
 ExecStartPre=/usr/sbin/modprobe libcomposite
-ExecStart=/usr/bin/gt load rndis-os-desc.scheme rndis
+ExecStart=/usr/sbin/sp970-usb-ncm.sh
 RemainAfterExit=yes
-ExecStop=/usr/bin/gt rm -rf rndis
-Type=simple
+Type=oneshot
 
 [Install]
 WantedBy=usb-gadget.target

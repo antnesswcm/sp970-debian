@@ -22,8 +22,23 @@ jobs:
       - name: Extract MSM8916 firmware
         run: sudo sh -e scripts/extract_fw.sh
 
+      - name: Fetch SP970 firmware (wcnss + modem)
+        run: |
+          # 私有 WCNSS/modem blob 由 sp970-alpine 公开仓托管（firmware/ 子树）
+          # 稀疏克隆减少流量（~40MB），避免把 blob 提交进 sp970-debian
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://github.com/antnesswcm/sp970-alpine.git fw-src
+          git -C fw-src sparse-checkout set firmware/sp970 firmware/modem/sp970
+          mkdir -p fw
+          cp -a fw-src/firmware/sp970 fw/
+          cp -a fw-src/firmware/modem fw/
+          ls -la fw/sp970 | head -3
+          ls -la fw/modem/sp970 | head -3
+
       - name: Create rootfs
         run: sudo sh -e scripts/debootstrap.sh
+        env:
+          SP970_FIRMWARE_DIR: ${{ github.workspace }}/fw
 
       - name: Build gadget-tool
         run: sudo sh -e scripts/build_gt.sh

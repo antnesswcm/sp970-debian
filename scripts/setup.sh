@@ -18,6 +18,7 @@ apt install -qqy --no-install-recommends \
     hostapd \
     iptables \
     libconfig9 \
+    libqmi-utils \
     locales \
     modemmanager \
     netcat-traditional \
@@ -38,3 +39,9 @@ passwd -d root
 
 echo user:1::::/home/user:/bin/bash | newusers
 echo 'user ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/user
+
+# ---- SP970 fixes (移植自 sp970-alpine) ----
+# sim-activate: N958St Get Slot Status bug 兜底（MM 启动前 qmicli 激活 SIM）
+install -m 0755 /sp970-fix/sp970-sim-activate.sh /usr/libexec/sp970-sim-activate.sh
+install -m 0644 /sp970-fix/sp970-sim-activate.service /etc/systemd/system/sp970-sim-activate.service
+systemctl enable sp970-sim-activate.service

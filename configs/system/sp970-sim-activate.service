@@ -1,0 +1,15 @@
+[Unit]
+Description=SP970 SIM activation (N958St Get Slot Status workaround)
+# 在 ModemManager 启动前先 qmicli 激活 SIM，避免 MM 开机误判 sim-missing power-off
+Before=ModemManager.service
+After=systemd-udevd.service rmtfs.service
+Wants=rmtfs.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/sp970-sim-activate.sh
+RemainAfterExit=yes
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

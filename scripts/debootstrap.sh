@@ -26,6 +26,10 @@ mount -o bind /dev/pts/ ${CHROOT}/dev/pts/
 mount -o bind /run ${CHROOT}/run/
 
 cp scripts/setup.sh ${CHROOT}
+# SP970 fix 文件（sim-activate 等）供 setup.sh 安装到系统
+mkdir -p ${CHROOT}/sp970-fix
+cp configs/system/sp970-sim-activate.sh ${CHROOT}/sp970-fix/
+cp configs/system/sp970-sim-activate.service ${CHROOT}/sp970-fix/
 chroot ${CHROOT} qemu-aarch64-static /bin/sh -c /setup.sh
 
 # cleanup
@@ -39,8 +43,15 @@ echo -n > ${CHROOT}/root/.bash_history
 echo ${HOST_NAME} > ${CHROOT}/etc/hostname
 sed -i "/localhost/ s/$/ ${HOST_NAME}/" ${CHROOT}/etc/hosts
 
-# setup systemd services
-cp -a configs/system/* ${CHROOT}/etc/systemd/system
+# setup systemd services (exclude sp970 fix files — installed by setup.sh)
+find configs/system -name '*.service' ! -name 'sp970-sim-activate.service' -exec cp -a {} ${CHROOT}/etc/systemd/system \;
+# also copy non-service system configs (override.conf, target wants, etc.)
+for f in configs/system/*; do
+    case "$f" in
+        *.sh|*.service) continue ;;
+        *) cp -a "$f" ${CHROOT}/etc/systemd/system/ ;;
+    esac
+done
 
 cp -a scripts/msm-firmware-loader.sh ${CHROOT}/usr/sbin
 
@@ -62,6 +73,7 @@ mkdir -p ${CHROOT}/boot/extlinux
 cp configs/extlinux.conf ${CHROOT}/boot/extlinux
 
 # copy custom dtb's
+mkdir -p ${CHROOT}/boot/dtbs/qcom
 cp dtbs/* ${CHROOT}/boot/dtbs/qcom
 
 # create missing directory

@@ -54,6 +54,12 @@ fastboot reboot
 # modemst1/2（NV）不刷——从原厂备份用 dd 恢复（见 docs/SP970-Alpine刷机指南.md 步骤四）
 ```
 
+> **⚠️ M2 刷机建议（2026-08-31 确认）**：OpenStick 的 aboot 用 `LK2ND_COMPATIBLE=yiming,uz801-v3`（UZ801 专用），
+> 而我们 Alpine 用 `thwc,ufi001c`（**已验证能 boot SP970**）。**首次 M2 建议只刷 boot.bin + rootfs.bin**（保留 Alpine 的 aboot 引导），
+> 避免 lk2nd compatible 不匹配导致无法引导。aboot 差异影响评估后再决定是否换。
+>
+> 已确认：hyp/rpm/sbl1/tz/gpt_both0.bin 与 Alpine **hash 完全一致**（同源），只有 aboot 因 compatible 串不同。
+
 ## 默认配置
 
 | 项 | 值 |

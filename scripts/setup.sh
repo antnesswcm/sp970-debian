@@ -10,8 +10,7 @@ echo "locales locales/locales_to_be_generated multiselect en_US.UTF-8 UTF-8" | d
 rm -f "/etc/locale.gen"
 
 apt update -qqy
-apt upgrade -qqy
-apt autoremove -qqy
+# NOTE: 跳过 apt upgrade —— debootstrap 基础系统直接装目标包，避免全量升级耗时/卡死
 apt install -qqy --no-install-recommends \
     bridge-utils \
     dnsmasq \

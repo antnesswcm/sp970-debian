@@ -36,9 +36,19 @@ jobs:
           ls -la fw/modem/sp970 | head -3
 
       - name: Create rootfs
-        run: sudo sh -e scripts/debootstrap.sh
+        # sudo 默认 env_reset 会剥离 env → 用 sudo -E 保留 SP970_FIRMWARE_DIR
+        run: sudo -E sh -e scripts/debootstrap.sh
         env:
           SP970_FIRMWARE_DIR: ${{ github.workspace }}/fw
+
+      - name: Verify firmware injection (wcnss + modem)
+        run: |
+          echo "=== /lib/firmware wcnss files ==="
+          ls -la rootfs/lib/firmware/ | grep -E 'wcnss|mba|modem' || echo "(MISSING!)"
+          echo "=== wlan/prima ==="
+          ls -la rootfs/lib/firmware/wlan/prima/ 2>/dev/null || echo "(MISSING!)"
+          echo "=== usb ncm script ==="
+          ls -la rootfs/usr/sbin/sp970-usb-ncm.sh 2>/dev/null || echo "(MISSING!)"
 
       - name: Build gadget-tool
         run: sudo sh -e scripts/build_gt.sh

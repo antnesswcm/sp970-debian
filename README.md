@@ -62,6 +62,26 @@ fastboot reboot
 | USB NCM | 192.168.5.1 |
 | SSH | user / 1 |
 
+## SimAdmin 部署（M4）
+
+Debian 是 SimAdmin 原生环境（systemd/glibc/NM 全满足），一条命令安装：
+
+```sh
+# WFC 版（WiFi Calling，推荐——本项目的 VoWiFi 研究用）
+curl -fsSL https://gh-proxy.com/https://raw.githubusercontent.com/3899/SimAdmin/main/install_latest.sh | sh -s -- --wfc
+
+# 或标准版
+curl -fsSL https://gh-proxy.com/https://raw.githubusercontent.com/3899/SimAdmin/main/install_latest.sh | sh
+
+# 访问: http://192.168.4.1:3000 （首次设置密码）
+# 注意: 启动后需在 WebUI/API 开启蜂窝数据（POST /api/data {"active":true}），
+#       否则 SimAdmin watchdog 会断开 lte（见 docs/SP970-参考资产与短信研究.md §7.8）
+```
+
+依赖说明：install_latest.sh 自动装 ModemManager/NetworkManager/QMI/PCSC + 启服务；
+本项目的 `sp970-sim-activate.service`（N958St bug 兜底）会与 SimAdmin 并存——
+若 SimAdmin 的 QMI auto-activate 覆盖了 bug，可 `systemctl disable sp970-sim-activate`。
+
 ## 相关文档
 
 - `docs/SP970-debian移植计划.md`（完整计划：可行性/风险/里程碑）

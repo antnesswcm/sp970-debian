@@ -155,10 +155,17 @@ check "usr/sbin/sp970-usb-ncm.sh"
 check "usr/sbin/msm-firmware-loader.sh"
 check "etc/udev/rules.d/10-udc.rules"
 check "etc/udev/rules.d/99-nm-usb0.rules"
-check "etc/systemd/system/NetworkManager.service"
 check "etc/NetworkManager/system-connections/hotspot.nmconnection"
 check "etc/NetworkManager/system-connections/usb.nmconnection"
 check "etc/NetworkManager/system-connections/lte.nmconnection"
+
+# NetworkManager.service 是 apt 包提供的（/usr/lib/systemd/system），非 build configs
+if [ -e "${CHROOT}/usr/lib/systemd/system/NetworkManager.service" ]; then
+    echo "  ✅ NetworkManager.service (apt /usr/lib/systemd/system)"
+else
+    echo "  ❌ NetworkManager.service — MISSING!"
+    errors=$((errors+1))
+fi
 
 # systemd 单元必须是以 [Unit] 开头的有效文件（防 find 覆盖 bug: 单元被裸路径文本覆盖）
 for svc in usb-gadget.service msm-firmware-loader.service sp970-led.service sp970-nat.service sp970-sim-activate.service; do

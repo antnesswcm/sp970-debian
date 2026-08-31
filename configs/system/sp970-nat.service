@@ -1,0 +1,12 @@
+[Unit]
+Description=SP970 NAT forwarding (WiFi -> wwan0)
+After=NetworkManager.service sp970-sim-activate.service
+Wants=sp970-sim-activate.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/sp970-nat.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

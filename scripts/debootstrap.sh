@@ -26,10 +26,10 @@ mount -o bind /dev/pts/ ${CHROOT}/dev/pts/
 mount -o bind /run ${CHROOT}/run/
 
 cp scripts/setup.sh ${CHROOT}
-# SP970 fix 文件（sim-activate 等）供 setup.sh 安装到系统
+# SP970 fix 文件（sim-activate/led/nat）供 setup.sh 安装到系统
 mkdir -p ${CHROOT}/sp970-fix
-cp configs/system/sp970-sim-activate.sh ${CHROOT}/sp970-fix/
-cp configs/system/sp970-sim-activate.service ${CHROOT}/sp970-fix/
+cp configs/system/sp970-*.sh ${CHROOT}/sp970-fix/
+cp configs/system/sp970-*.service ${CHROOT}/sp970-fix/
 chroot ${CHROOT} qemu-aarch64-static /bin/sh -c /setup.sh
 
 # cleanup

@@ -1,0 +1,11 @@
+[Unit]
+Description=SP970 LED status (red off / green heartbeat / blue phy0tx)
+After=systemd-udevd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/sp970-led.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

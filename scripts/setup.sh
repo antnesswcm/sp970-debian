@@ -45,3 +45,13 @@ echo 'user ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/user
 install -m 0755 /sp970-fix/sp970-sim-activate.sh /usr/libexec/sp970-sim-activate.sh
 install -m 0644 /sp970-fix/sp970-sim-activate.service /etc/systemd/system/sp970-sim-activate.service
 systemctl enable sp970-sim-activate.service
+
+# led: 红 off / 绿 heartbeat / 蓝 phy0tx（DTS 已配 trigger）
+install -m 0755 /sp970-fix/sp970-led.sh /usr/libexec/sp970-led.sh
+install -m 0644 /sp970-fix/sp970-led.service /etc/systemd/system/sp970-led.service
+systemctl enable sp970-led.service
+
+# nat: WiFi(192.168.4.x) -> wwan0 MASQUERADE
+install -m 0755 /sp970-fix/sp970-nat.sh /usr/libexec/sp970-nat.sh
+install -m 0644 /sp970-fix/sp970-nat.service /etc/systemd/system/sp970-nat.service
+systemctl enable sp970-nat.service

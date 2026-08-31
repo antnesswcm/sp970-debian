@@ -3,8 +3,16 @@
 CHROOT=${CHROOT=$(pwd)/rootfs}
 SRCDIR=$(pwd)/src
 
+# 架构自适应: arm64 原生 runner 直接 chroot; x86 runner 用 qemu-aarch64-static
+if [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
+    QEMU=""
+else
+    QEMU="qemu-aarch64-static"
+    cp "$(which qemu-aarch64-static)" ${CHROOT}/usr/bin 2>/dev/null || true
+fi
+
 # install gt dependencies
-chroot ${CHROOT} qemu-aarch64-static /bin/sh \
+chroot ${CHROOT} ${QEMU} /bin/sh \
     -c " apt update; apt install libconfig-dev -y"
 
 # build and install gt

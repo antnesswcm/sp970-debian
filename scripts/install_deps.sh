@@ -14,6 +14,7 @@ apt install -y \
     g++-aarch64-linux-gnu \
     gcc-aarch64-linux-gnu \
     gcc-arm-none-eabi \
+    libc6-dev-arm64-cross \
     libtool \
     make \
     pkg-config \

@@ -11,9 +11,9 @@ else
     cp "$(which qemu-aarch64-static)" ${CHROOT}/usr/bin 2>/dev/null || true
 fi
 
-# install gt dependencies
+# install gt dependencies (rootfs 当 sysroot, 需要 dev 头文件)
 chroot ${CHROOT} ${QEMU} /bin/sh \
-    -c " apt update; apt install libconfig-dev -y"
+    -c " apt update; apt install -y libconfig-dev libc6-dev"
 
 # build and install gt
 (

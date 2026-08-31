@@ -85,6 +85,18 @@ cp dtbs/* ${CHROOT}/boot/dtbs/qcom
 # create missing directory
 mkdir -p ${CHROOT}/lib/firmware/msm-firmware-loader
 
+# SP970 WCNSS WiFi 固件 + NV 校准（可选注入，双保险）
+# 源: sp970-firmware/firmware/sp970/（私有 blob 不入仓，由 SP970_FIRMWARE_DIR 提供）
+if [ -n "${SP970_FIRMWARE_DIR}" ] && [ -d "${SP970_FIRMWARE_DIR}/sp970" ]; then
+    mkdir -p ${CHROOT}/lib/firmware/wlan/prima
+    for f in ${SP970_FIRMWARE_DIR}/sp970/WCNSS.B* ${SP970_FIRMWARE_DIR}/sp970/WCNSS.MDT; do
+        name=$(basename "$f" | tr 'A-Z' 'a-z')
+        cp "$f" ${CHROOT}/lib/firmware/${name}
+    done
+    cp ${SP970_FIRMWARE_DIR}/sp970/WCNSS_qcom_wlan_nv.bin ${CHROOT}/lib/firmware/wlan/prima/WCNSS_qcom_wlan_nv.bin
+    echo "SP970 WCNSS firmware injected (${SP970_FIRMWARE_DIR}/sp970)"
+fi
+
 # update fstab
 echo "PARTUUID=80780b1d-0fe1-27d3-23e4-9244e62f8c46\t/boot\text2\tdefaults\t0 2" > ${CHROOT}/etc/fstab
 

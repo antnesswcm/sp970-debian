@@ -9,9 +9,15 @@ rm -rf ${CHROOT}
 debootstrap --foreign --arch arm64 \
     --keyring /usr/share/keyrings/debian-archive-keyring.gpg ${RELEASE} ${CHROOT}
 
-cp $(which qemu-aarch64-static) ${CHROOT}/usr/bin
+# 架构检测: arm64 原生 runner 无需 qemu 模拟; x86 runner 需 qemu-aarch64-static
+if [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
+    QEMU=""
+else
+    QEMU="qemu-aarch64-static"
+    cp "$(which qemu-aarch64-static)" ${CHROOT}/usr/bin
+fi
 
-chroot ${CHROOT} qemu-aarch64-static /bin/bash /debootstrap/debootstrap --second-stage
+chroot ${CHROOT} ${QEMU} /bin/bash /debootstrap/debootstrap --second-stage
 
 cat << EOF > ${CHROOT}/etc/apt/sources.list
 deb https://mirrors.tuna.tsinghua.edu.cn/debian ${RELEASE} main contrib non-free-firmware
@@ -30,7 +36,7 @@ cp scripts/setup.sh ${CHROOT}
 mkdir -p ${CHROOT}/sp970-fix
 cp configs/system/sp970-*.sh ${CHROOT}/sp970-fix/
 cp configs/system/sp970-*.service ${CHROOT}/sp970-fix/
-chroot ${CHROOT} qemu-aarch64-static /bin/sh -c /setup.sh
+chroot ${CHROOT} ${QEMU} /bin/sh -c /setup.sh
 
 # cleanup
 for a in proc sys dev/pts dev run; do

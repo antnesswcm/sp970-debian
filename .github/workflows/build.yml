@@ -5,7 +5,8 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # arm64 原生 runner：debootstrap 无需 qemu 模拟（x86 runner 上模拟 arm64 极慢，曾 45min+ 卡死）
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@v4

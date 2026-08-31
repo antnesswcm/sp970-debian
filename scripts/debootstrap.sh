@@ -1,7 +1,9 @@
 #!/bin/sh -e
 
 CHROOT=${CHROOT=$(pwd)/rootfs}
-RELEASE=${RELEASE=stable}
+# RELEASE 固定 bookworm（Debian 12）: OpenStick 原始验证环境, 包名全匹配
+# （stable 现为 trixie, libconfig9 等包名已漂移, 用 stable 会装包失败）
+RELEASE=${RELEASE=bookworm}
 HOST_NAME=${HOST_NAME=openstick-debian}
 
 rm -rf ${CHROOT}

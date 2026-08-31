@@ -17,18 +17,24 @@ apt install -qqy --no-install-recommends \
     hostapd \
     iptables \
     libconfig9 \
+    libmbim-utils \
     libqmi-utils \
+    libpcsclite1 \
+    pcscd \
     locales \
     modemmanager \
     netcat-traditional \
     net-tools \
     network-manager \
     openssh-server \
+    python3 \
     qrtr-tools \
     rmtfs \
     sudo \
     systemd-timesyncd \
+    tar \
     tzdata \
+    unzip \
     wireguard-tools \
     wpasupplicant
 apt clean

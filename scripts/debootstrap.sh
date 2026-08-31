@@ -60,6 +60,11 @@ for f in configs/system/*; do
         *) cp -a "$f" ${CHROOT}/etc/systemd/system/ ;;
     esac
 done
+# enable critical services (usb-gadget/msm-firmware-loader 开机自启, 否则 USB NCM/WiFi 起不来)
+for svc in usb-gadget.service msm-firmware-loader.service; do
+    mkdir -p ${CHROOT}/etc/systemd/system/multi-user.target.wants
+    ln -sf /etc/systemd/system/${svc} ${CHROOT}/etc/systemd/system/multi-user.target.wants/${svc}
+done
 
 cp -a scripts/msm-firmware-loader.sh ${CHROOT}/usr/sbin
 

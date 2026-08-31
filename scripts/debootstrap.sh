@@ -52,12 +52,14 @@ echo ${HOST_NAME} > ${CHROOT}/etc/hostname
 sed -i "/localhost/ s/$/ ${HOST_NAME}/" ${CHROOT}/etc/hosts
 
 # setup systemd services (exclude sp970 fix files — installed by setup.sh)
-# -type f: 只拷实体 .service；跳过 wants 目录里的软链（避免 basename 相同覆盖成悬垂软链）
-find configs/system -name '*.service' -type f ! -name 'sp970-sim-activate.service' -exec cp -a {} ${CHROOT}/etc/systemd/system \;
+# -maxdepth 1: 只拷顶层实体 .service；configs/system/*/target.wants/ 里是路径文本文件
+# （git 普通文件非软链），递归 find 会 basename 相同覆盖真实单元（usb-gadget.service 变 38B 垃圾）
+find configs/system -maxdepth 1 -name '*.service' -type f ! -name 'sp970-sim-activate.service' -exec cp -a {} ${CHROOT}/etc/systemd/system \;
 # also copy non-service system configs (override.conf, target wants, etc.)
 for f in configs/system/*; do
     case "$f" in
         *.sh|*.service) continue ;;
+        *target.wants) continue ;;  # 软链由下方 ln -sf 生成，勿拷路径文本文件
         *) cp -a "$f" ${CHROOT}/etc/systemd/system/ ;;
     esac
 done

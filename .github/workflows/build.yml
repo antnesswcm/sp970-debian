@@ -49,6 +49,13 @@ jobs:
           ls -la rootfs/lib/firmware/wlan/prima/ 2>/dev/null || echo "(MISSING!)"
           echo "=== usb ncm script ==="
           ls -la rootfs/usr/sbin/sp970-usb-ncm.sh 2>/dev/null || echo "(MISSING!)"
+          echo "=== systemd unit content (must NOT be a bare path) ==="
+          for f in usb-gadget.service msm-firmware-loader.service sp970-led.service; do
+            echo "--- $f ---"
+            head -3 rootfs/etc/systemd/system/$f 2>/dev/null || echo "(MISSING!)"
+          done
+          echo "=== wants symlinks ==="
+          ls -la rootfs/etc/systemd/system/multi-user.target.wants/ | grep -E 'usb-gadget|msm-firmware' || echo "(MISSING!)"
 
       - name: Build gadget-tool
         run: sudo sh -e scripts/build_gt.sh

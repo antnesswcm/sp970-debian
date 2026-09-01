@@ -24,6 +24,12 @@ cp -a dist/* mnt
 
 umount mnt
 
+# shrink rootfs to minimum size for fast flashing
+# （对齐 sp970-alpine：取消大镜像，快刷；暂不移植开机自动扩容 expand-rootfs）
+# tar 解包后 fs 未检查，resize2fs 要求先 e2fsck
+e2fsck -fy rootfs.raw
+resize2fs -M rootfs.raw
+
 # create sparse android images 
 img2simg rootfs.raw files/rootfs.bin
 img2simg boot.raw files/boot.bin

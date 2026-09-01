@@ -11,9 +11,12 @@ rm -f "/etc/locale.gen"
 
 apt update -qqy
 # NOTE: 跳过 apt upgrade —— debootstrap 基础系统直接装目标包，避免全量升级耗时/卡死
+# dnsmasq-base 而非 dnsmasq：NM 的 method=shared 需要 dnsmasq 二进制做 DHCP/DNS，
+# 但完整 dnsmasq 包自带 dnsmasq.service 自启 → 抢占 53 端口 → NM 内部 dnsmasq 起不来
+# → hotspot/usb shared 全失败（实机日志: Address already in use → ip-config-unavailable）
 apt install -qqy --no-install-recommends \
     bridge-utils \
-    dnsmasq \
+    dnsmasq-base \
     hostapd \
     iptables \
     libconfig9 \
